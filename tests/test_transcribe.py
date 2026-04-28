@@ -1,6 +1,13 @@
 import os
+import shutil
 
 import pytest
+
+
+if shutil.which("ffmpeg") is None:
+    pytest.skip("ffmpeg not found on PATH", allow_module_level=True)
+
+
 import torch
 
 import whisper

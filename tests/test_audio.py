@@ -1,6 +1,13 @@
 import os.path
+import shutil
 
 import numpy as np
+import pytest
+
+
+if shutil.which("ffmpeg") is None:
+    pytest.skip("ffmpeg not found on PATH", allow_module_level=True)
+
 
 from whisper.audio import SAMPLE_RATE, load_audio, log_mel_spectrogram
 
