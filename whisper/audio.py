@@ -23,13 +23,13 @@ FRAMES_PER_SECOND = exact_div(SAMPLE_RATE, HOP_LENGTH)  # 10ms per audio frame
 TOKENS_PER_SECOND = exact_div(SAMPLE_RATE, N_SAMPLES_PER_TOKEN)  # 20ms per audio token
 
 
-def load_audio(file: str, sr: int = SAMPLE_RATE):
+def load_audio(file: Union[str, os.PathLike], sr: int = SAMPLE_RATE):
     """
     Open an audio file and read as mono waveform, resampling as necessary
 
     Parameters
     ----------
-    file: str
+    file: Union[str, os.PathLike]
         The audio file to open
 
     sr: int
@@ -46,6 +46,8 @@ def load_audio(file: str, sr: int = SAMPLE_RATE):
         raise RuntimeError(
             "ffmpeg not found; please install ffmpeg and ensure it is available on PATH"
         )
+
+    file = os.fspath(file)
     # fmt: off
     cmd = [
         "ffmpeg",
@@ -66,7 +68,8 @@ def load_audio(file: str, sr: int = SAMPLE_RATE):
             "ffmpeg not found; please install ffmpeg and ensure it is available on PATH"
         ) from e
     except CalledProcessError as e:
-        raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
+        stderr = e.stderr.decode(errors="replace").strip() if e.stderr else ""
+        raise RuntimeError(f"Failed to load audio: {stderr}") from e
 
     return np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0
 
@@ -117,7 +120,7 @@ def mel_filters(device, n_mels: int) -> torch.Tensor:
 
 
 def log_mel_spectrogram(
-    audio: Union[str, np.ndarray, torch.Tensor],
+    audio: Union[str, os.PathLike, np.ndarray, torch.Tensor],
     n_mels: int = 80,
     padding: int = 0,
     device: Optional[Union[str, torch.device]] = None,
@@ -127,7 +130,7 @@ def log_mel_spectrogram(
 
     Parameters
     ----------
-    audio: Union[str, np.ndarray, torch.Tensor], shape = (*)
+    audio: Union[str, os.PathLike, np.ndarray, torch.Tensor], shape = (*)
         The path to audio or either a NumPy array or Tensor containing the audio waveform in 16 kHz
 
     n_mels: int
@@ -145,7 +148,7 @@ def log_mel_spectrogram(
         A Tensor that contains the Mel spectrogram
     """
     if not torch.is_tensor(audio):
-        if isinstance(audio, str):
+        if isinstance(audio, (str, os.PathLike)):
             audio = load_audio(audio)
         audio = torch.from_numpy(audio)
 
