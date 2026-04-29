@@ -1,5 +1,4 @@
 import os
-import shutil
 from functools import lru_cache
 from subprocess import CalledProcessError, run
 from typing import Optional, Union
@@ -42,11 +41,6 @@ def load_audio(file: Union[str, os.PathLike], sr: int = SAMPLE_RATE):
 
     # This launches a subprocess to decode audio while down-mixing
     # and resampling as necessary. Requires the ffmpeg CLI in PATH.
-    if shutil.which("ffmpeg") is None:
-        raise RuntimeError(
-            "ffmpeg not found; please install ffmpeg and ensure it is available on PATH"
-        )
-
     file = os.fspath(file)
     # fmt: off
     cmd = [
